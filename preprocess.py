@@ -6,8 +6,6 @@ from torchvision import datasets, transforms
 
 from PIL import Image
 
-from utils.utils import global_contrast_normalization
-
 
 class MNIST_loader(data.Dataset):
     """This class is needed to processing batches for the dataloader."""
@@ -34,8 +32,7 @@ def get_mnist(args, data_dir='./data/mnist/'):
     """get dataloders"""
 
     transform = transforms.Compose([transforms.ToTensor(),
-                                    transforms.Normalize(mean=(0.5, 0.5, 0.5), 
-                                                         std=(0.5, 0.5, 0.5)))
+                                    transforms.Normalize((0.5,), (0.5,))])
     train = datasets.MNIST(root=data_dir, train=True, download=True)
     test = datasets.MNIST(root=data_dir, train=False, download=True)
 

@@ -10,10 +10,8 @@ if __name__ == '__main__':
     parser = argparse.ArgumentParser()
     parser.add_argument("--num_epochs", type=int, default=100,
                         help="number of epochs")
-    parser.add_argument('--lr_adam', type=float, default=1e-5,
+    parser.add_argument('--lr', type=float, default=1e-5,
                         help='learning rate')
-    parser.add_argument('--lr_rmsprop', type=float, default=1e-4,
-                        help='learning rate RMSprop if WGAN is True.')
     parser.add_argument("--batch_size", type=int, default=100, 
                         help="Batch size")
     parser.add_argument('--latent_dim', type=int, default=200,

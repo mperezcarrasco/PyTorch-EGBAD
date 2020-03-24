@@ -15,7 +15,7 @@ from utils.utils import weights_init_normal
 class TrainerEGBAD:
     def __init__(self, args, data, device):
         self.args = args
-        self.train_loader = data
+        self.train_loader, _ = data
         self.device = device
 
 
@@ -30,13 +30,13 @@ class TrainerEGBAD:
         self.D.apply(weights_init_normal)
 
         optimizer_ge = optim.Adam(list(self.G.parameters()) +
-                                    list(self.E.parameters()), lr=self.args.lr_adam)
-        optimizer_d = optim.Adam(self.D.parameters(), lr=self.args.lr_adam)
+                                    list(self.E.parameters()), lr=self.args.lr)
+        optimizer_d = optim.Adam(self.D.parameters(), lr=self.args.lr)
 
-        fixed_z = Variable(torch.randn((16, self.args.latent_dim, 1, 1)),
+        fixed_z = Variable(torch.randn((16, self.args.latent_dim)),
                            requires_grad=False).to(self.device)
         criterion = nn.BCELoss()
-        for epoch in range(self.args.num_epochs):
+        for epoch in range(self.args.num_epochs+1):
             ge_losses = 0
             d_losses = 0
             for x, _ in Bar(self.train_loader):
@@ -57,7 +57,7 @@ class TrainerEGBAD:
                 optimizer_ge.zero_grad()
 
                 #Generator:
-                z_fake = Variable(torch.randn((x.size(0), self.args.latent_dim, 1, 1)).to(self.device),
+                z_fake = Variable(torch.randn((x.size(0), self.args.latent_dim)).to(self.device),
                                   requires_grad=False)
                 x_fake = self.G(z_fake)
 
@@ -84,7 +84,7 @@ class TrainerEGBAD:
                 d_losses += loss_d.item()
 
             if epoch % 10 == 0:
-                vutils.save_image(self.G(fixed_z).data, './images/{}_fake.png'.format(epoch))
+                vutils.save_image((self.G(fixed_z).data+1)/2., './images/{}_fake.png'.format(epoch))
 
             print("Training... Epoch: {}, Discrimiantor Loss: {:.3f}, Generator Loss: {:.3f}".format(
                 epoch, d_losses/len(self.train_loader), ge_losses/len(self.train_loader)

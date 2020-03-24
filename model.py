@@ -8,7 +8,7 @@ class Discriminator(nn.Module):
         super(Discriminator, self).__init__()
 
         # Inference over x
-        self.conv1x = nn.Conv2d(3, 64, 4, stride=2, bias=False)
+        self.conv1x = nn.Conv2d(1, 64, 4, stride=2, bias=False)
         self.conv2x = nn.Conv2d(64, 64, 4, stride=2, bias=False)
         self.bn2x = nn.BatchNorm2d(64)
 
@@ -16,7 +16,7 @@ class Discriminator(nn.Module):
         self.nn1z = nn.Linear(z_dim, 512, bias=False)
 
         # Joint inference
-        self.nn1xz = nn.Linear(1024, 1024)
+        self.nn1xz = nn.Linear(2112, 1024)
         self.nn2xz = nn.Linear(1024, 1)
 
     def inf_x(self, x):
@@ -29,7 +29,6 @@ class Discriminator(nn.Module):
         return z
 
     def inf_xz(self, xz):
-        print(xz.shape)
         xz = F.leaky_relu(self.nn1xz(xz), negative_slope=0.1)
         xz = self.nn2xz(xz)
         return torch.sigmoid(xz)
@@ -50,18 +49,18 @@ class Generator(nn.Module):
         self.nn1 = nn.Linear(z_dim, 1024, bias=False)
         self.bn1 = nn.BatchNorm1d(1024)
         self.nn2 = nn.Linear(1024, 7*7*128, bias=False)
-        self.bn2 = nn.BatchNorm2d(7*7*128)
-        self.deconv3 = nn.ConvTranspose2d(128, 64, 4, stride=2, bias=False)
+        self.bn2 = nn.BatchNorm1d(7*7*128)
+        self.deconv3 = nn.ConvTranspose2d(128, 64, 4, stride=2, padding=1, bias=False)
         self.bn3 = nn.BatchNorm2d(64)
-        self.deconv4 = nn.ConvTranspose2d(64, 1, 4, stride=2, bias=False)
+        self.deconv4 = nn.ConvTranspose2d(64, 1, 4, stride=2, padding=1, bias=False)
 
     def forward(self, z):
         z = F.relu(self.bn1(self.nn1(z)))
         z = F.relu(self.bn2(self.nn2(z)))
-        z = torch.view(z.size(0), 128, 7, 7)
+        z = z.view(z.size(0), 128, 7, 7)
         z = F.relu(self.bn3(self.deconv3(z)))
         z = F.relu(self.deconv4(z)) + self.output_bias
-        return torch.sigmoid(z)
+        return torch.tanh(z)
 
 
 class Encoder(nn.Module):
@@ -73,7 +72,7 @@ class Encoder(nn.Module):
         self.bn2 = nn.BatchNorm2d(64)
         self.conv3 = nn.Conv2d(64, 128, 3, stride=2, bias=False)
         self.bn3 = nn.BatchNorm2d(128)
-        self.nn4 = nn.Linear(9999, z_dim*2)
+        self.nn4 = nn.Linear(3200, z_dim*2)
 
     def reparameterize(self, z):
         mu, log_sigma = z[:, :self.z_dim], z[:, self.z_dim:]
@@ -82,9 +81,9 @@ class Encoder(nn.Module):
         return mu + eps * std
 
     def forward(self, x):
-        x = self.bn1(self.conv1(x))
+        x = self.conv1(x)
         x = F.leaky_relu(self.bn2(self.conv2(x)), negative_slope=0.1)
         x = F.leaky_relu(self.bn3(self.conv3(x)), negative_slope=0.1)
-        x = x.view(x.size(0),-1); print(x)
-        z = self.reparameterize(self.nn4(x).shape)
-        return z.view(x.size(0), self.z_dim, 1, 1)
+        x = x.view(x.size(0),-1)
+        z = self.reparameterize(self.nn4(x))
+        return z.view(x.size(0), self.z_dim)
