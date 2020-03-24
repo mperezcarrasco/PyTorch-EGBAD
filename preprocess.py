@@ -36,21 +36,26 @@ def get_mnist(args, data_dir='./data/mnist/'):
     train = datasets.MNIST(root=data_dir, train=True, download=True)
     test = datasets.MNIST(root=data_dir, train=False, download=True)
 
-    x_train = train.data
-    y_train = train.targets
+    data = train.data
+    labels = train.targets
 
-    x_train = x_train[np.where(y_train==args.normal_class)]
-    y_train = y_train[np.where(y_train==args.normal_class)]
-                                    
+    normal_data = data[labels!=args.anormal_class]
+    normal_labels = labels[labels!=args.anormal_class]
+
+    n_train = int(normal_data.shaepe[0]*0.8)
+
+    x_train = normal_data[:n_train]
+    y_train = normal_labels[:n_train]              
     data_train = MNIST_loader(x_train, y_train, transform)
     dataloader_train = DataLoader(data_train, batch_size=args.batch_size, 
                                   shuffle=True, num_workers=0)
     
-    x_test = test.data
-    y_test = test.targets
-    y_test[np.where(y_test!=args.normal_class)[0]] = True
-    y_test[np.where(y_test==args.normal_class)[0]] = False
-    data_test = MNIST_loader(x_test, y_test.long(), transform)
+    anormal_data = data[labels==args.anormal_class]
+    anormal_labels = labels[labels==args.anormal_class]
+    x_test = np.concatenate((anormal_data, normal_data[n_train:]), axis=0)
+    y_test = np.concatenate((anormal_labels, normal_labels[n_train:]), axis=0)
+    y_test = np.where(y_test==args.anormal_class, 0, 1)
+    data_test = MNIST_loader(x_test, y_test, transform)
     dataloader_test = DataLoader(data_test, batch_size=args.batch_size, 
                                   shuffle=False, num_workers=0)
     return dataloader_train, dataloader_test
