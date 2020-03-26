@@ -8,30 +8,30 @@ class Discriminator(nn.Module):
         super(Discriminator, self).__init__()
 
         # Inference over x
-        self.conv1x = nn.Conv2d(1, 64, 4, stride=2, bias=False)
-        self.conv2x = nn.Conv2d(64, 64, 4, stride=2, bias=False)
+        self.conv1x = nn.Conv2d(1, 64, 4, stride=2, padding=1, bias=False)
+        self.conv2x = nn.Conv2d(64, 64, 4, stride=2, padding=1, bias=False)
         self.bn2x = nn.BatchNorm2d(64)
 
         # Inference over z
         self.nn1z = nn.Linear(z_dim, 512, bias=False)
 
         # Joint inference
-        self.nn1xz = nn.Linear(2112, 1024)
+        self.nn1xz = nn.Linear(7*7*64 + 512, 1024)
         self.nn2xz = nn.Linear(1024, 1)
 
     def inf_x(self, x):
-        x = F.leaky_relu(self.conv1x(x), negative_slope=0.1)
-        x = F.leaky_relu(self.bn2x(self.conv2x(x)), negative_slope=0.1)
+        x = F.dropout2d(F.leaky_relu(self.conv1x(x), negative_slope=0.1), 0.5)
+        x = F.dropout2d(F.leaky_relu(self.bn2x(self.conv2x(x)), negative_slope=0.1), 0.5)
         return x
 
     def inf_z(self, z):
-        z = F.leaky_relu(self.nn1z(z), negative_slope=0.1)
+        z = F.dropout(F.leaky_relu(self.nn1z(z), negative_slope=0.1), 0.5)
         return z
 
     def inf_xz(self, xz):
-        xz = F.leaky_relu(self.nn1xz(xz), negative_slope=0.1)
+        xz = F.dropout(F.leaky_relu(self.nn1xz(xz), negative_slope=0.1), 0.5)
         xz = self.nn2xz(xz)
-        return torch.sigmoid(xz)
+        return xz
 
     def forward(self, x, z):
         x = self.inf_x(x)
@@ -45,7 +45,7 @@ class Generator(nn.Module):
     def __init__(self, z_dim=32):
         super(Generator, self).__init__()
         self.output_bias = nn.Parameter(torch.zeros(1, 28, 28), requires_grad=True)
-
+        
         self.nn1 = nn.Linear(z_dim, 1024, bias=False)
         self.bn1 = nn.BatchNorm1d(1024)
         self.nn2 = nn.Linear(1024, 7*7*128, bias=False)
@@ -72,7 +72,7 @@ class Encoder(nn.Module):
         self.bn2 = nn.BatchNorm2d(64)
         self.conv3 = nn.Conv2d(64, 128, 3, stride=2, bias=False)
         self.bn3 = nn.BatchNorm2d(128)
-        self.nn4 = nn.Linear(3200, z_dim*2)
+        self.nn4 = nn.Linear(128*5*5, z_dim*2)
 
     def reparameterize(self, z):
         mu, log_sigma = z[:, :self.z_dim], z[:, self.z_dim:]
