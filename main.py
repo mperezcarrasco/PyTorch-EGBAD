@@ -2,7 +2,7 @@ import numpy as np
 import argparse 
 import torch
 
-from train import TrainerEGBAD
+from train import EGBADTrainer
 from preprocess import get_mnist
 
 
@@ -14,10 +14,12 @@ if __name__ == '__main__':
                         help='learning rate')
     parser.add_argument("--batch_size", type=int, default=100, 
                         help="Batch size")
-    parser.add_argument('--latent_dim', type=int, default=200,
+    parser.add_argument('--latent_dim', type=int, default=256,
                         help='Dimension of the latent variable z')
     parser.add_argument('--anormal_class', type=int, default=0,
                         help='Class to be treated as normal class.')
+    parser.add_argument('--pretrained', type=bool, default=False,
+                        help='If is there a pretrained model.')
     #parsing arguments.
     args = parser.parse_args() 
 
@@ -26,6 +28,6 @@ if __name__ == '__main__':
 
     data = get_mnist(args)
 
-    egbad = TrainerEGBAD(args, data, device)
+    egbad = EGBADTrainer(args, data, device)
     egbad.train()
 

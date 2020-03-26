@@ -12,22 +12,19 @@ from model import Generator, Encoder, Discriminator
 from utils.utils import weights_init_normal
 
 
-class TrainerEGBAD:
+class EGBADTrainer:
     def __init__(self, args, data, device):
         self.args = args
         self.train_loader, _ = data
         self.device = device
+        self.build_models()
 
 
     def train(self):
-        """Training the BiGAN"""
-        self.G = Generator(self.args.latent_dim).to(self.device)
-        self.E = Encoder(self.args.latent_dim).to(self.device)
-        self.D = Discriminator(self.args.latent_dim).to(self.device)
-
-        self.G.apply(weights_init_normal)
-        self.E.apply(weights_init_normal)
-        self.D.apply(weights_init_normal)
+        """Training the AGBAD"""
+        
+        if self.args.pretrained:
+            self.load_weights()
 
         optimizer_ge = optim.Adam(list(self.G.parameters()) +
                                   list(self.E.parameters()), lr=self.args.lr)
@@ -89,7 +86,31 @@ class TrainerEGBAD:
             print("Training... Epoch: {}, Discrimiantor Loss: {:.3f}, Generator Loss: {:.3f}".format(
                 epoch, d_losses/len(self.train_loader), ge_losses/len(self.train_loader)
             ))
+            
+    def build_models(self):           
+        self.G = Generator(self.args.latent_dim).to(self.device)
+        self.E = Encoder(self.args.latent_dim).to(self.device)
+        self.D = Discriminator(self.args.latent_dim).to(self.device)
+        self.G.apply(weights_init_normal)
+        self.E.apply(weights_init_normal)
+        self.D.apply(weights_init_normal)
                 
+    def save_weights(self):
+        """Save weights."""
+        state_dict_D = self.D.state_dict()
+        state_dict_E = self.E.state_dict()
+        state_dict_G = self.G.state_dict()
+        torch.save({'Generator': state_dict_G,
+                    'Encoder': state_dict_E,
+                    'Discriminator': state_dict_D}, 'weights/model_parameters.pth')
+
+    def load_weights(self):
+        """Load weights."""
+        state_dict = torch.load('weights/model_parameters.pth')
+
+        egbad.D.load_state_dict(state_dict['Discriminator'])
+        egbad.G.load_state_dict(state_dict['Generator'])
+        egbad.E.load_state_dict(state_dict['Encoder'])
 
         
 

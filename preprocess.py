@@ -33,28 +33,30 @@ def get_mnist(args, data_dir='./data/mnist/'):
 
     transform = transforms.Compose([transforms.ToTensor(),
                                     transforms.Normalize((0.5,), (0.5,))])
-    train = datasets.MNIST(root=data_dir, train=True, download=True, transform=transform)
+    train = datasets.MNIST(root=data_dir, train=True, download=True)
 
     data = train.data
     labels = train.targets
-
+    
     normal_data = data[labels!=args.anormal_class]
     normal_labels = labels[labels!=args.anormal_class]
-
-    n_train = int(normal_data.shape[0]*0.8)
-
-    x_train = normal_data[:n_train]
-    y_train = normal_labels[:n_train]              
-    data_train = MNIST_loader(x_train, y_train)
+    anormal_data = data[labels==args.anormal_class]
+    anormal_labels = labels[labels==args.anormal_class]
+    
+    N_train = int(normal_data.shape[0]*0.8)
+    
+    x_train = normal_data[:N_train]
+    y_train = normal_labels[:N_train]
+    data_train = MNIST_loader(x_train, y_train, transform=transform)
     dataloader_train = DataLoader(data_train, batch_size=args.batch_size, 
                                   shuffle=True, num_workers=0)
     
-    anormal_data = data[labels==args.anormal_class]
-    anormal_labels = labels[labels==args.anormal_class]
-    x_test = torch.cat((anormal_data, normal_data[n_train:]), dim=0)
-    y_test = torch.cat((anormal_labels, normal_labels[n_train:]), dim=0)
-    y_test = np.where(y_test==args.anormal_class, 0, 1)
-    data_test = MNIST_loader(x_test, y_test)
+    x_test = torch.cat((anormal_data, normal_data[N_train:]), dim=0) 
+    y_test = torch.cat((anormal_labels, normal_labels[N_train:]), dim=0)
+    y_test = np.where(y_test==args.anormal_class, 1, 0)
+    data_test = MNIST_loader(x_test, y_test, transform=transform)
     dataloader_test = DataLoader(data_test, batch_size=args.batch_size, 
-                                  shuffle=False, num_workers=0)
+                                 shuffle=True, num_workers=0)
     return dataloader_train, dataloader_test
+
+
