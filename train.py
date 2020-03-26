@@ -30,10 +30,10 @@ class TrainerEGBAD:
         self.D.apply(weights_init_normal)
 
         optimizer_ge = optim.Adam(list(self.G.parameters()) +
-                                    list(self.E.parameters()), lr=self.args.lr)
+                                  list(self.E.parameters()), lr=self.args.lr)
         optimizer_d = optim.Adam(self.D.parameters(), lr=self.args.lr)
 
-        fixed_z = Variable(torch.randn((16, self.args.latent_dim)),
+        fixed_z = Variable(torch.randn((16, self.args.latent_dim, 1, 1)),
                            requires_grad=False).to(self.device)
         criterion = nn.BCELoss()
         for epoch in range(self.args.num_epochs+1):
@@ -57,7 +57,7 @@ class TrainerEGBAD:
                 optimizer_ge.zero_grad()
 
                 #Generator:
-                z_fake = Variable(torch.randn((x.size(0), self.args.latent_dim)).to(self.device),
+                z_fake = Variable(torch.randn((x.size(0), self.args.latent_dim, 1, 1)).to(self.device),
                                   requires_grad=False)
                 x_fake = self.G(z_fake)
 

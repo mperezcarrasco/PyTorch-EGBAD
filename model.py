@@ -6,7 +6,6 @@ import torch.nn.functional as F
 class Discriminator(nn.Module):
     def __init__(self, z_dim=200):
         super(Discriminator, self).__init__()
-
         # Inference over x
         self.conv1x = nn.Conv2d(1, 64, 4, stride=2, padding=1, bias=False)
         self.conv2x = nn.Conv2d(64, 64, 4, stride=2, padding=1, bias=False)
@@ -35,6 +34,7 @@ class Discriminator(nn.Module):
 
     def forward(self, x, z):
         x = self.inf_x(x)
+        z = z.view(z.size(0),-1)
         z = self.inf_z(z)
         xz = torch.cat((x.view(x.size(0),-1),z), dim=1)
         out = self.inf_xz(xz)
@@ -55,6 +55,7 @@ class Generator(nn.Module):
         self.deconv4 = nn.ConvTranspose2d(64, 1, 4, stride=2, padding=1, bias=False)
 
     def forward(self, z):
+        z = z.view(z.size(0),-1)
         z = F.relu(self.bn1(self.nn1(z)))
         z = F.relu(self.bn2(self.nn2(z)))
         z = z.view(z.size(0), 128, 7, 7)
@@ -86,4 +87,4 @@ class Encoder(nn.Module):
         x = F.leaky_relu(self.bn3(self.conv3(x)), negative_slope=0.1)
         x = x.view(x.size(0),-1)
         z = self.reparameterize(self.nn4(x))
-        return z.view(x.size(0), self.z_dim)
+        return z.view(x.size(0), self.z_dim, 1, 1)

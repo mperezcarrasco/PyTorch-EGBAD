@@ -9,7 +9,7 @@ from PIL import Image
 
 class MNIST_loader(data.Dataset):
     """This class is needed to processing batches for the dataloader."""
-    def __init__(self, data, target, transform):
+    def __init__(self, data, target, transform=False):
         self.data = data
         self.target = target
         self.transform = transform
@@ -33,8 +33,7 @@ def get_mnist(args, data_dir='./data/mnist/'):
 
     transform = transforms.Compose([transforms.ToTensor(),
                                     transforms.Normalize((0.5,), (0.5,))])
-    train = datasets.MNIST(root=data_dir, train=True, download=True)
-    test = datasets.MNIST(root=data_dir, train=False, download=True)
+    train = datasets.MNIST(root=data_dir, train=True, download=True, transform=transform)
 
     data = train.data
     labels = train.targets
@@ -46,7 +45,7 @@ def get_mnist(args, data_dir='./data/mnist/'):
 
     x_train = normal_data[:n_train]
     y_train = normal_labels[:n_train]              
-    data_train = MNIST_loader(x_train, y_train, transform)
+    data_train = MNIST_loader(x_train, y_train)
     dataloader_train = DataLoader(data_train, batch_size=args.batch_size, 
                                   shuffle=True, num_workers=0)
     
@@ -55,7 +54,7 @@ def get_mnist(args, data_dir='./data/mnist/'):
     x_test = torch.cat((anormal_data, normal_data[n_train:]), dim=0)
     y_test = torch.cat((anormal_labels, normal_labels[n_train:]), dim=0)
     y_test = np.where(y_test==args.anormal_class, 0, 1)
-    data_test = MNIST_loader(x_test, y_test, transform)
+    data_test = MNIST_loader(x_test, y_test)
     dataloader_test = DataLoader(data_test, batch_size=args.batch_size, 
                                   shuffle=False, num_workers=0)
     return dataloader_train, dataloader_test
