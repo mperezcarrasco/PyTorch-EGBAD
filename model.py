@@ -60,7 +60,7 @@ class Generator(nn.Module):
         z = F.relu(self.bn2(self.nn2(z)))
         z = z.view(z.size(0), 128, 7, 7)
         z = F.relu(self.bn3(self.deconv3(z)))
-        z = F.relu(self.deconv4(z)) + self.output_bias
+        z = self.deconv4(z) + self.output_bias
         return torch.tanh(z)
 
 

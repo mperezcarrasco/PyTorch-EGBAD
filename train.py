@@ -86,6 +86,7 @@ class EGBADTrainer:
             print("Training... Epoch: {}, Discrimiantor Loss: {:.3f}, Generator Loss: {:.3f}".format(
                 epoch, d_losses/len(self.train_loader), ge_losses/len(self.train_loader)
             ))
+        self.save_weights()
             
     def build_models(self):           
         self.G = Generator(self.args.latent_dim).to(self.device)
@@ -108,9 +109,9 @@ class EGBADTrainer:
         """Load weights."""
         state_dict = torch.load('weights/model_parameters.pth')
 
-        egbad.D.load_state_dict(state_dict['Discriminator'])
-        egbad.G.load_state_dict(state_dict['Generator'])
-        egbad.E.load_state_dict(state_dict['Encoder'])
+        self.D.load_state_dict(state_dict['Discriminator'])
+        self.G.load_state_dict(state_dict['Generator'])
+        self.E.load_state_dict(state_dict['Encoder'])
 
         
 
